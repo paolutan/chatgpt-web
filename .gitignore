@@ -27,4 +27,4 @@ coverage
 *.njsproj
 *.sln
 *.sw?
-openai.conf
+openai.env
