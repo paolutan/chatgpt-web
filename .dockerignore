@@ -4,3 +4,4 @@ Dockerfile
 .husky
 .github
 .vscode
+.idea
