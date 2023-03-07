@@ -20,7 +20,8 @@ services:
       - '80'
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - /var/data/chatgpt:/var/log/nginx
+      - /var/data/chatgpt/log:/var/log/nginx
+      - /var/data/chatgpt/passwd.db:/etc/nginx/passwd.db
     links:
       - chatgpt-server
     command: [ "nginx", "-g", "daemon off;" ]
