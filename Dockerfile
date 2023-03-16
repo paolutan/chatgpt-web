@@ -6,15 +6,7 @@ WORKDIR /app
 
 RUN npm install pnpm -g && pnpm install && pnpm run build
 
-# service
-FROM node:lts-alpine
+# nginx
+FROM nginx:alpine
 
-COPY /service /app
-COPY --from=builder /app/dist /app/public
-
-WORKDIR /app
-RUN npm install pnpm -g && pnpm install
-
-EXPOSE 3002
-
-CMD ["pnpm", "run", "start"]
+COPY --from=builder /app/dist /usr/share/nginx/html

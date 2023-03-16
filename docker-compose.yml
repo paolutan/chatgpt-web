@@ -1,19 +1,23 @@
-version: '3'
+version: '3.9'
 
 services:
   chatgpt-server:
-    build: .
-    image: chatgpt/server
-    container_name: chatgpt-server
+    build:
+      context: ./pserver
+      dockerfile: Dockerfile
+    image: chatgpt/pserver
+    container_name: chatgpt-pserver
     ports:
-      - '3002:3002'
+      - '5001:5001'
     env_file: ./openai.env
     environment:
       TIMEOUT_MS: 60000
 
   nginx:
-    image: nginx
-    container_name: chatgpt-nginx
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nginx-server
     ports:
       - '80:80'
     expose:

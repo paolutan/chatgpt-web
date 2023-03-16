@@ -1,0 +1,13 @@
+faiss-cpu==1.7.3
+Flask==2.2.3
+Jinja2==3.1.2
+langchain==0.0.103
+nltk==3.8.1
+openai==0.27.0
+prompt-toolkit==3.0.38
+python-dotenv==1.0.0
+PyYAML==6.0
+transformers==4.26.1
+Werkzeug==2.2.3
+gunicorn==20.1.0
+uwsgi==2.0.20
