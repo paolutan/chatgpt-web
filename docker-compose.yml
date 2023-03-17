@@ -3,30 +3,33 @@ version: '3.9'
 services:
   chatgpt-server:
     build:
-      context: ./pserver
-      dockerfile: Dockerfile
-    image: chatgpt/pserver
-    container_name: chatgpt-pserver
+      context: .
+      dockerfile: application/Dockerfile
+    image: chatgpt/application
+    container_name: chatgpt-application
     ports:
       - '5001:5001'
     env_file: ./openai.env
     environment:
       TIMEOUT_MS: 60000
+    command: [ "gunicorn", "-w", "2", "--timeout", "120", "--bind", "0.0.0.0:5001", "server:app" ]
 
   nginx:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: nginx-server
+      dockerfile: nginx/Dockerfile
+    image: chatgpt/nginx
+    container_name: chatgpt-nginx
     ports:
       - '80:80'
     expose:
       - '80'
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - /var/data/chatgpt/log:/var/log/nginx
-      - /var/data/chatgpt/passwd.db:/etc/nginx/passwd.db
       - /var/data/chatgpt/cert:/etc/nginx/cert
     links:
+      - chatgpt-server
+    depends_on:
       - chatgpt-server
     command: [ "nginx", "-g", "daemon off;" ]
