@@ -63,6 +63,7 @@ def config():
 @app.route('/api/chat-process', methods=['POST'])
 def chat_process():
 	parameters = request.get_json()
+	print(parameters)
 	token = parameters.get("prompt", "")
 	options = parameters.get("options", {})
 	first_chunk = True
@@ -84,4 +85,4 @@ def after_request(response):
 
 
 if __name__ == "__main__":
-	app.run(debug=True, port=5001)
+	app.run(debug=True, port=5001, host="0.0.0.0")

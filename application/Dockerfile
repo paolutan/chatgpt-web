@@ -9,9 +9,11 @@ ENV PYTHONPATH "${PYTHONPATH}:/chatgpt-web"
 WORKDIR /chatgpt-web/application
 RUN pip install -r requirements.txt
 
+ENV TZ=Asia/Shanghai
+
 ENV FLASK_APP=server.py
 ENV FLASK_DEBUG=true
 
 EXPOSE 5001
 
-CMD ["gunicorn", "-w", "2", "--timeout", "120", "--bind", "0.0.0.0:5001", "server:app"]
+CMD [ "gunicorn", "-c", "gunicorn_conf.py", "server:app" ]
