@@ -1,23 +1,6 @@
-import json
 import os
-import traceback
-import datetime
-
 import dotenv
-import requests
-from flask import Flask, request, render_template, redirect, send_from_directory, jsonify, make_response, Response
-from langchain import FAISS
-from langchain import VectorDBQA, HuggingFaceHub, Cohere, OpenAI
-from langchain.chains.question_answering import load_qa_chain
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings import OpenAIEmbeddings, HuggingFaceHubEmbeddings, CohereEmbeddings, \
-	HuggingFaceInstructEmbeddings
-from langchain.prompts import PromptTemplate
-from langchain.prompts.chat import (
-	ChatPromptTemplate,
-	SystemMessagePromptTemplate,
-	HumanMessagePromptTemplate,
-)
+from flask import Flask, request, jsonify, make_response
 from application.chatgpt.constants import model_config
 
 # loading the .env file
