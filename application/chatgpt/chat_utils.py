@@ -14,6 +14,7 @@ dotenv.load_dotenv("../openai.env")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME")
+MAX_CONTEXT_NUM = os.getenv("MAX_CONTEXT_NUM", 10)
 
 error_code_message = {
     400: '[OpenAI] 模型的最大上下文长度是4096个令牌，请减少信息的长度。| This model\'s maximum context length is 4096 tokens.',
@@ -49,7 +50,31 @@ def model_config():
 
 
 def add_prompt(prompts: list, role: str, content: str):
+    if (not role) or (not content):
+        return
     prompts.append({"role": role, "content": content})
+
+
+def construct_chat_context(prompt: str, parent_message_id: str = "", max_context_num: int = 0, system_prompt: str = ""):
+    chat_context = list()
+
+    for i in range(max_context_num):
+        if parent_message_id:
+            parent_message = mongo_utils.find_chat_history_by_message_id(parent_message_id)
+            if parent_message:
+                parent_message_id = parent_message.get("parent_message_id", "")
+                add_prompt(chat_context, parent_message.get("role", ""), parent_message.get("content", ""))
+            else:
+                print(f"Can not find message: {parent_message_id}")
+                break
+
+    if system_prompt:
+        add_prompt(chat_context, ROLE_SYSTEM, system_prompt)
+
+    chat_context.reverse()
+    add_prompt(chat_context, ROLE_USER, prompt)
+
+    return chat_context
 
 
 def chat_with_gpt(prompt: str,
@@ -57,30 +82,43 @@ def chat_with_gpt(prompt: str,
                   parent_message_id: str = "",
                   temperature: float = 1.,
                   need_save_db=False):
+    prompt_id = str(uuid.uuid4())
     if need_save_db:
-        prompt_id = str(uuid.uuid4())
-        mongo_utils.insert_chat_history(message_id=prompt_id, role=ROLE_USER, content=prompt, timestamp=time.time())
+        mongo_utils.insert_chat_history(
+            message_id=prompt_id,
+            role=ROLE_USER,
+            content=prompt,
+            parent_message_id=parent_message_id,
+            timestamp=time.time(),
+            system_prompt=system_prompt
+        )
 
-    messages = list()
-    if system_prompt:
-        add_prompt(messages, role=ROLE_SYSTEM, content=system_prompt)
-    add_prompt(messages, role=ROLE_USER, content=prompt)
+    chat_context = construct_chat_context(prompt, parent_message_id, MAX_CONTEXT_NUM, system_prompt)
 
     completion = openai.ChatCompletion.create(
         model=OPENAI_MODEL_NAME,
-        messages=messages,
+        messages=chat_context,
         temperature=temperature,
     )
     message_id = completion.id
+    model = completion.model
+    content = completion.choices[0].message["content"]
     data = {
         "role": completion.choices[0].message["role"],
         "id": completion.id,
         "parentMessageId": parent_message_id,
-        "text": completion.choices[0].message["content"],
+        "text": content,
         "detail": completion.to_dict()
     }
     if need_save_db:
-        mongo_utils.insert_chat_history(message_id=message_id, role=ROLE_ASSISTANT, content=text, timestamp=time.time())
+        mongo_utils.insert_chat_history(
+            message_id=message_id,
+            role=ROLE_ASSISTANT,
+            content=content,
+            parent_message_id=prompt_id,
+            timestamp=time.time(),
+            model=model
+        )
     return json.dumps(data)
 
 
@@ -89,28 +127,33 @@ def stream_chat_with_gpt(prompt: str,
                          parent_message_id: str = "",
                          temperature: float = 1.,
                          need_save_db=False):
+    prompt_id = str(uuid.uuid4())
     if need_save_db:
-        prompt_id = str(uuid.uuid4())
-        mongo_utils.insert_chat_history(message_id=prompt_id, role=ROLE_USER, content=prompt, timestamp=time.time())
+        mongo_utils.insert_chat_history(
+            message_id=prompt_id,
+            role=ROLE_USER,
+            content=prompt,
+            parent_message_id=parent_message_id,
+            timestamp=time.time(),
+            system_prompt=system_prompt
+        )
 
-    messages = list()
-    if system_prompt:
-        add_prompt(messages, role=ROLE_SYSTEM, content=system_prompt)
-    add_prompt(messages, role=ROLE_USER, content=prompt)
+    chat_context = construct_chat_context(prompt, parent_message_id, MAX_CONTEXT_NUM, system_prompt)
 
     completion = openai.ChatCompletion.create(
         model=OPENAI_MODEL_NAME,
-        messages=messages,
+        messages=chat_context,
         temperature=temperature,
         stream=True
     )
-    text, message_id = "", ""
+    model, text, message_id = "", "", ""
     for chunk in completion:
         if 'content' in chunk.choices[0].delta:
             print(chunk.choices[0].delta['content'], end="")
             sep = "" if not text else "\n"
             text += chunk.choices[0].delta['content']
             message_id = chunk.id
+            model = chunk.model
             data = {
                 "role": "assistant",
                 "id": chunk.id,
@@ -120,10 +163,23 @@ def stream_chat_with_gpt(prompt: str,
                 "detail": chunk.to_dict()
             }
             yield f"{sep}{json.dumps(data)}"
+
     if need_save_db:
-        mongo_utils.insert_chat_history(message_id=message_id, role=ROLE_ASSISTANT, content=text, timestamp=time.time())
+        mongo_utils.insert_chat_history(
+            message_id=message_id,
+            role=ROLE_ASSISTANT,
+            content=text,
+            parent_message_id=prompt_id,
+            timestamp=time.time(),
+            model=model
+        )
 
 
 if __name__ == "__main__":
-    res = chat_with_gpt("""how to show "print logs" while running flask with gunicore""")
-    print(res)
+    # res = chat_with_gpt("""how to show "print logs" while running flask with gunicore""")
+    # print(res)
+    context = construct_chat_context("hello", "chapl-6vK8GUbmm2ZCEyNlY8PQZhrOeOEOo", 2, "you are simpleton")
+    print(context)
+
+    context = construct_chat_context("hello", "chatcmpl-6vK8GUbmm2ZCEyNlY8PQZhrOeOEOo", 2, "you are simpleton")
+    print(context)
