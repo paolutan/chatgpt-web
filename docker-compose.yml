@@ -7,7 +7,7 @@ services:
     container_name: chatgpt-server
     ports:
       - '3002:3002'
-    env_file: ./openai.env
+    env_file: ./application/openai.env
     environment:
       TIMEOUT_MS: 60000
 
