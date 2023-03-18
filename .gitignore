@@ -27,4 +27,8 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
 openai.env
+# Environment variables files
+/service/.env
+
