@@ -27,5 +27,6 @@ coverage
 *.njsproj
 *.sln
 *.sw?
-openai.env
+application/openai.env
 .env
+__pycache__

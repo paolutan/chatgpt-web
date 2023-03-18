@@ -1,7 +1,7 @@
 version: '3.9'
 
 services:
-  chatgpt-server:
+  application:
     build:
       context: .
       dockerfile: application/Dockerfile
@@ -9,9 +9,14 @@ services:
     container_name: chatgpt-application
     ports:
       - '5001:5001'
-    env_file: ./openai.env
+    env_file: application/openai.env
     environment:
       TIMEOUT_MS: 60000
+      MONGO_URI: mongodb://mongo:27017/chatgpt
+    links:
+      - mongo
+    depends_on:
+      - mongo
     volumes:
       - /var/data/chatgpt/log:/var/logs
     command: [ "gunicorn", "-c", "gunicorn_conf.py", "server:app" ]
@@ -31,7 +36,20 @@ services:
       - /var/data/chatgpt/log:/var/log/nginx
       - /var/data/chatgpt/cert:/etc/nginx/cert
     links:
-      - chatgpt-server
+      - application
     depends_on:
-      - chatgpt-server
+      - application
+      - mongo
     command: [ "nginx", "-g", "daemon off;" ]
+
+  mongo:
+    image: mongo:6
+    container_name: chatgpt-mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data_container:/data/db
+
+volumes:
+  mongodb_data_container: { }
+  app_data_container: { }

@@ -1,21 +1,9 @@
 import os
-import dotenv
-import openai
 from flask import Flask, request, jsonify, make_response, Response
-from application.chatgpt.config import model_config
-from application.chatgpt.utils import stream_chat_with_gpt
-from application.middleware import auth
-
-# loading the .env file
-dotenv.load_dotenv("../.env")
-openai.api_key = os.getenv("OPENAI_API_KEY")
+from application.chatgpt.chat_utils import model_config, stream_chat_with_gpt
+from application import auth
 
 app = Flask(__name__)
-app.config["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER = "inputs"
-app.config['CELERY_BROKER_URL'] = os.getenv("CELERY_BROKER_URL")
-app.config['CELERY_RESULT_BACKEND'] = os.getenv("CELERY_RESULT_BACKEND")
-app.config['MONGO_URI'] = os.getenv("MONGO_URI")
 
 
 @app.route('/api/whoami/<name>', methods=['POST'])
@@ -76,7 +64,7 @@ def chat_process():
         prompt = parameters.get("prompt", "")
         options = parameters.get("options", {})
         parent_message_id = options.get("parentMessageId", "")
-        stream_response = stream_chat_with_gpt(prompt, parent_message_id=parent_message_id)
+        stream_response = stream_chat_with_gpt(prompt, parent_message_id=parent_message_id, need_save_db=True)
         return Response(stream_response, content_type="application/octet-stream")
     except Exception as e:
         res = {"status": "Fail", "data": None, "message": e.args}
