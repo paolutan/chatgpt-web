@@ -1,12 +1,16 @@
 import os
 from pymongo import MongoClient
+from pymongo import errors
 
-mongo = MongoClient(os.getenv("MONGO_URI"))
-db = mongo["chatgpt"]
-chat_history_collection = db["chat_history"]
+try:
+    mongo = MongoClient(os.getenv("MONGO_URI"))
+    db = mongo["chatgpt"]
+    chat_history_collection = db["chat_history"]
 
-chat_history_collection.create_index("message_id")
-chat_history_collection.create_index("parent_message_id")
+    chat_history_collection.create_index("message_id")
+    chat_history_collection.create_index("parent_message_id")
+except errors.NetworkTimeout as e:
+    print(f"[WARN] {e.args}")
 
 
 def find_chat_history_by_message_id(message_id):

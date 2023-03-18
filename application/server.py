@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request, jsonify, make_response, Response
-from application.chatgpt.chat_utils import model_config, stream_chat_with_gpt
+from application.chatgpt.chat_utils import model_config, chat_with_openai
 from application import auth
 
 app = Flask(__name__)
@@ -62,9 +62,11 @@ def chat_process():
         parameters = request.get_json()
         print(parameters)
         prompt = parameters.get("prompt", "")
+        if not prompt:
+            raise ValueError("Message can not be empty.")
         options = parameters.get("options", {})
         parent_message_id = options.get("parentMessageId", "")
-        stream_response = stream_chat_with_gpt(prompt, parent_message_id=parent_message_id, need_save_db=True)
+        stream_response = chat_with_openai(prompt, parent_message_id=parent_message_id, need_save_db=True, stream=True)
         return Response(stream_response, content_type="application/octet-stream")
     except Exception as e:
         res = {"status": "Fail", "data": None, "message": e.args}
