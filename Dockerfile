@@ -1,3 +1,4 @@
+# build front-end and backend-end in one container
 # build front-end
 FROM node:lts-alpine AS frontend
 

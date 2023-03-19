@@ -13,6 +13,8 @@ services:
     environment:
       TIMEOUT_MS: 60000
       MONGO_URI: mongodb://mongo:27017/chatgpt
+    networks:
+      - application-network
     links:
       - mongo
     depends_on:
@@ -35,6 +37,8 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - /var/data/chatgpt/log:/var/log/nginx
       - /var/data/chatgpt/cert:/etc/nginx/cert
+    networks:
+      - application-network
     links:
       - application
     depends_on:
@@ -47,8 +51,13 @@ services:
     container_name: chatgpt-mongo
     ports:
       - "27017:27017"
+    networks:
+      - application-network
     volumes:
       - mongodb_data_container:/data/db
 
 volumes:
   mongodb_data_container: { }
+
+networks:
+  application-network: { }

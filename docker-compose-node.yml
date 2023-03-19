@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  chatgpt-node-server:
+    build:
+      context: .
+      dockerfile: service/Dockerfile
+    image: chatgpt/node-server
+    container_name: chatgpt-node-server
+    ports:
+      - '3002:3002'
+    env_file: ./service/openai.env
+    networks:
+      - node-network
+    environment:
+      TIMEOUT_MS: 60000
+    command: [ "pnpm", "run", "start" ]
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    image: chatgpt/node-nginx
+    container_name: chatgpt-node-nginx
+    ports:
+      - "80:80"
+    expose:
+      - "80"
+    volumes:
+      - ./nginx/nginx_node_server.conf:/etc/nginx/conf.d/default.conf
+      - /var/data/chatgpt/node-server/log:/var/log/nginx
+      - /var/data/chatgpt/cert:/etc/nginx/cert
+    networks:
+      - node-network
+    depends_on:
+      - chatgpt-node-server
+    command: [ "nginx", "-g", "daemon off;" ]
+
+networks:
+  node-network: { }
