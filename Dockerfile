@@ -4,6 +4,9 @@ FROM node:lts-alpine AS frontend
 RUN npm install pnpm -g
 
 WORKDIR /app
+ENV VITE_GLOB_API_URL /api
+ENV VITE_APP_API_BASE_URL http://localhost:3002/
+ENV VITE_GLOB_OPEN_LONG_REPLY false
 
 COPY ./package.json /app
 
