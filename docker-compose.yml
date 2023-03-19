@@ -8,8 +8,8 @@ services:
     image: chatgpt/application
     container_name: chatgpt-application
     ports:
-      - "5001:5001"
-    env_file: application/openai.env
+      - '3002:3002'
+    env_file: ./application/openai.env
     environment:
       TIMEOUT_MS: 60000
       MONGO_URI: mongodb://mongo:27017/chatgpt
