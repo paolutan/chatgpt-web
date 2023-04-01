@@ -10,3 +10,4 @@ Dockerfile
 application/.venv
 .*
 */.*
+!.env
