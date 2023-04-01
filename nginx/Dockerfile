@@ -7,7 +7,7 @@ ENV VITE_GLOB_API_URL /api
 ENV VITE_APP_API_BASE_URL http://localhost:3002/
 ENV VITE_GLOB_OPEN_LONG_REPLY false
 
-RUN npm install pnpm -g && pnpm install && pnpm run build
+RUN npm install pnpm@7.30.5 -g && pnpm install && pnpm run build
 
 # nginx
 FROM nginx:alpine
